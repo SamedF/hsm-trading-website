@@ -1,6 +1,6 @@
 import { ArrowRight, Building2, Globe2, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
-import heroImage from "../assets/hero.png";
+import heroImage from "../assets/hero.jpeg";
 import logo from "../assets/hsm-logo.jpeg";
 import { company, content } from "../data/siteData";
 import type { Lang } from "../data/siteData";

@@ -124,7 +124,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
-  const [isSwitching, setIsSwitching] = useState(false);
+  
 
   const t = content[lang];
   const nextLang = lang === "fr" ? "en" : "fr";
@@ -154,17 +154,9 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  function switchLanguage() {
-    setIsSwitching(true);
-
-    window.setTimeout(() => {
-      setLang(nextLang);
-    }, 120);
-
-    window.setTimeout(() => {
-      setIsSwitching(false);
-    }, 420);
-  }
+ function switchLanguage() {
+  setLang(nextLang);
+}
 
   function closeMobileMenu() {
     setOpen(false);
@@ -252,41 +244,40 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
           className="hidden shrink-0 items-center justify-end gap-2 xl:flex"
           variants={navContainerVariants}
         >
-          <motion.button
-            variants={navItemVariants}
-            onClick={switchLanguage}
-            whileHover={{
-              y: -2,
-              scale: 1.035,
-              boxShadow: "0 12px 28px rgba(230, 134, 19, 0.18)",
-            }}
-            whileTap={{ scale: 0.94 }}
-            animate={
-              isSwitching
-                ? {
-                    rotateY: 180,
-                    scale: 0.96,
-                  }
-                : {
-                    rotateY: 0,
-                    scale: 1,
-                  }
-            }
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="relative top-[2px] inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[#e68613]/40 hover:bg-orange-50"
-            aria-label="Switch language"
-            type="button"
-          >
-            <FlagIcon lang={nextLang} />
-            <motion.span
-              key={lang}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              {lang === "fr" ? "EN" : "FR"}
-            </motion.span>
-          </motion.button>
+          <button
+  onClick={switchLanguage}
+  className="relative top-[2px] inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[#e68613]/40 hover:bg-orange-50"
+  aria-label="Switch language"
+  type="button"
+>
+  <AnimatePresence mode="wait" initial={false}>
+    <motion.span
+      key={nextLang}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+      }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="inline-flex"
+    >
+      <FlagIcon lang={nextLang} />
+    </motion.span>
+  </AnimatePresence>
+
+  <AnimatePresence mode="wait" initial={false}>
+    <motion.span
+      key={lang}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+    >
+      {lang === "fr" ? "EN" : "FR"}
+    </motion.span>
+  </AnimatePresence>
+</button>
 
           <motion.a
             variants={navItemVariants}

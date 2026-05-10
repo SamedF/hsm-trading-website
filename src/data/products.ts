@@ -88,7 +88,7 @@ export const productsDatabase = [
     category: "Panels",
     nameFr: "Sandwich Panels",
     nameEn: "Sandwich Panels",
-    image: "/products/sandwich-panels.jpeg",
+    image: "/products/Sandwich-panels.jpeg",
     descriptionFr:
       "Panneaux composés de deux tôles acier et d’un noyau isolant, idéals pour façades, toitures, entrepôts et bâtiments industriels.",
     descriptionEn:
@@ -114,7 +114,7 @@ export const productsDatabase = [
     category: "Shutters",
     nameFr: "Metal Shutter Guides",
     nameEn: "Metal Shutter Guides",
-    image: "/products/shutter-guides.jpeg",
+    image: "/products/Shutter-guides.jpeg",
     descriptionFr:
       "Guides robustes pour rideaux métalliques, conçus pour assurer un fonctionnement fluide, durable et sécurisé.",
     descriptionEn:
