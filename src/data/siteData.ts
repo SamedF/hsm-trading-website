@@ -15,8 +15,8 @@ export const company = {
   email: "import@hsm.tn",
   phone: "+216 58 400 253",
   whatsapp: "21658400253",
-  location: "Head Office Zaouit Sousse, Cairo Avenue, Msaken Road, Zaouit Sousse",
-  shortLocation: "Zaouit Sousse, Tunisie",
+  location: "63 lotissement Ennakhil, Kantaoui 4042, Sousse, Tunisia",
+  shortLocation: "Kantaoui 4042, Sousse, Tunisia",
 };
 
 export const content = {

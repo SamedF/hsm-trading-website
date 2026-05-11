@@ -154,7 +154,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
- function switchLanguage() {
+  function switchLanguage() {
   setLang(nextLang);
 }
 
