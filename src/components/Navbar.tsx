@@ -15,10 +15,14 @@ type ProductMenuGroup = {
   key: string;
   labelFr: string;
   labelEn: string;
-  items: {
+  sections: {
     labelFr: string;
     labelEn: string;
-    href: string;
+    items: {
+      labelFr: string;
+      labelEn: string;
+      href: string;
+    }[];
   }[];
 };
 
@@ -27,36 +31,42 @@ const productMenu: ProductMenuGroup[] = [
     key: "steel",
     labelFr: "Acier",
     labelEn: "Steel",
-    items: [
+    sections: [
       {
-        labelFr: "Feuillards d’acier",
-        labelEn: "Steel Strips",
-        href: "#product-steel-strips",
-      },
-      {
-        labelFr: "Tubes ronds",
-        labelEn: "Round Tubes",
-        href: "#product-round-tubes",
-      },
-      {
-        labelFr: "Tôles d’acier",
-        labelEn: "Steel Sheets",
-        href: "#product-steel-sheets",
-      },
-      {
-        labelFr: "Poutrelles en acier",
-        labelEn: "Steel Beams",
-        href: "#product-steel-beams",
-      },
-      {
-        labelFr: "Panneaux sandwich",
-        labelEn: "Sandwich Panels",
-        href: "#product-sandwich-panels",
-      },
-      {
-        labelFr: "Tubes carrés",
-        labelEn: "Square Tubes",
-        href: "#product-square-tubes",
+        labelFr: "Produits acier",
+        labelEn: "Steel Products",
+        items: [
+          {
+            labelFr: "Feuillards d’acier",
+            labelEn: "Steel Strips",
+            href: "#product-steel-strips",
+          },
+          {
+            labelFr: "Tubes ronds",
+            labelEn: "Round Tubes",
+            href: "#product-round-tubes",
+          },
+          {
+            labelFr: "Tôles d’acier",
+            labelEn: "Steel Sheets",
+            href: "#product-steel-sheets",
+          },
+          {
+            labelFr: "Poutrelles",
+            labelEn: "Beams",
+            href: "#product-beams",
+          },
+          {
+            labelFr: "Panneaux sandwich",
+            labelEn: "Sandwich Panels",
+            href: "#product-sandwich-panels",
+          },
+          {
+            labelFr: "Tubes carrés",
+            labelEn: "Square Tubes",
+            href: "#product-square-tubes",
+          },
+        ],
       },
     ],
   },
@@ -64,68 +74,142 @@ const productMenu: ProductMenuGroup[] = [
     key: "aluminium",
     labelFr: "Aluminium",
     labelEn: "Aluminium",
-    items: [
+    sections: [
       {
-        labelFr: "Profilés aluminium",
-        labelEn: "Aluminium Profiles",
-        href: "#product-aluminium-profiles",
+        labelFr: "Accessoires",
+        labelEn: "Accessories",
+        items: [
+          {
+            labelFr: "Crémone pour fenêtres",
+            labelEn: "Cremon for Windows",
+            href: "#product-cremon-for-windows",
+          },
+          {
+            labelFr: "Serrure Hook BOLT",
+            labelEn: "Hook BOLT",
+            href: "#product-hook-bolt",
+          },
+          {
+            labelFr: "Poignées avec rosaces métalliques",
+            labelEn: "Handles with Metal Rosettes",
+            href: "#product-handles-with-metal-rosettes",
+          },
+          {
+            labelFr: "Serrure encastrée pour portes",
+            labelEn: "Mortise Lock for Doors",
+            href: "#product-mortise-lock-for-doors",
+          },
+          {
+            labelFr: "Ouvre-portes électriques",
+            labelEn: "Electric Door Openers",
+            href: "#product-electric-door-openers",
+          },
+          {
+            labelFr: "Cylindre ECON",
+            labelEn: "ECON",
+            href: "#product-econ",
+          },
+          {
+            labelFr: "Poignées Euro avec plaque",
+            labelEn: "Euro Handles with Escutcheon",
+            href: "#product-euro-handles-with-escutcheon",
+          },
+        ],
       },
       {
-        labelFr: "Accessoires aluminium",
-        labelEn: "Aluminium Accessories",
-        href: "#product-aluminium-accessories",
+        labelFr: "Fenêtres",
+        labelEn: "Windows",
+        items: [
+          {
+            labelFr: "Fenêtres ouvrantes en aluminium",
+            labelEn: "Fenêtres ouvrantes en aluminium",
+            href: "#product-fenetres-ouvrantes-en-aluminium",
+          },
+        ],
       },
       {
-        labelFr: "Systèmes fenêtres aluminium",
-        labelEn: "Aluminium Window Systems",
-        href: "#product-aluminium-window-systems",
+        labelFr: "Moteurs",
+        labelEn: "Engines",
+        items: [
+          {
+            labelFr: "EVO M01000",
+            labelEn: "EVO M01000",
+            href: "#product-evo-m01000",
+          },
+          {
+            labelFr: "EVO M01001",
+            labelEn: "EVO M01001",
+            href: "#product-evo-m01001",
+          },
+          {
+            labelFr: "EVO M01019",
+            labelEn: "EVO M01019",
+            href: "#product-evo-m01019",
+          },
+          {
+            labelFr: "EVO M01030",
+            labelEn: "EVO M01030",
+            href: "#product-evo-m01030",
+          },
+          {
+            labelFr: "EVO M01021",
+            labelEn: "EVO M01021",
+            href: "#product-evo-m01021",
+          },
+        ],
       },
       {
-        labelFr: "Poignées de fenêtres",
-        labelEn: "Window Handles",
-        href: "#product-window-handles",
-      },
-      {
-        labelFr: "Serrures de portes",
-        labelEn: "Door Locks",
-        href: "#product-door-locks",
-      },
-      {
-        labelFr: "Serrures à crochet",
-        labelEn: "Hook Locks",
-        href: "#product-hook-locks",
-      },
-      {
-        labelFr: "Cylindres",
-        labelEn: "Cylinders",
-        href: "#product-cylinders",
-      },
-      {
-        labelFr: "Ouvre-portes électriques",
-        labelEn: "Electric Door Openers",
-        href: "#product-electric-door-openers",
+        labelFr: "Axes",
+        labelEn: "Axes",
+        items: [
+          {
+            labelFr: "Axes octogonaux",
+            labelEn: "Octagonal Axes",
+            href: "#product-octagonal-axes",
+          },
+        ],
       },
       {
         labelFr: "Moustiquaires",
         labelEn: "Fly Screens",
-        href: "#product-fly-screens",
+        items: [
+          {
+            labelFr: "Moustiquaires aluminium horizontales",
+            labelEn: "Horizontal Aluminum Fly Screens",
+            href: "#product-horizontal-aluminum-fly-screens",
+          },
+          {
+            labelFr: "Moustiquaires aluminium verticales",
+            labelEn: "Vertical Aluminum Fly Screens",
+            href: "#product-vertical-aluminum-fly-screens",
+          },
+        ],
       },
-    ],
-  },
-  {
-    key: "guardrails",
-    labelFr: "Garde-corps",
-    labelEn: "Guardrails",
-    items: [
       {
-        labelFr: "Garde-corps aluminium",
-        labelEn: "Aluminium Guardrails",
-        href: "#product-aluminium-guardrails",
-      },
-      {
-        labelFr: "Garde-corps Crystal Line",
-        labelEn: "Crystal Line Guardrails",
-        href: "#product-crystal-line-guardrails",
+        labelFr: "Garde-corps",
+        labelEn: "Guardrail",
+        items: [
+          {
+            labelFr: "Garde-corps aluminium",
+            labelEn: "Aluminum Guardrails",
+            href: "#product-aluminum-guardrails",
+          },
+          {
+            labelFr: "Garde-corps Crystal Line",
+            labelEn: "Crystal Line Guardrails",
+            href: "#product-crystal-line-guardrails",
+          },
+          {
+            labelFr: "Garde-corps 025",
+            labelEn: "Guardrail 025",
+            href: "#product-guardrail-025",
+          },
+          {
+            labelFr: "Garde-corps 140",
+            labelEn: "Guardrail 140",
+            href: "#product-guardrail-140",
+          },
+        ],
       },
     ],
   },
@@ -133,26 +217,47 @@ const productMenu: ProductMenuGroup[] = [
     key: "laser-doors",
     labelFr: "Portes laser",
     labelEn: "Laser Doors",
-    items: [
+    sections: [
       {
-        labelFr: "Motifs décoratifs laser",
-        labelEn: "Laser Cut Decorative Motifs",
-        href: "#product-laser-cut-decorative-motifs",
-      },
-      {
-        labelFr: "Panneaux laser sur mesure",
-        labelEn: "Custom Laser Panels",
-        href: "#product-custom-laser-panels",
-      },
-      {
-        labelFr: "Portes métalliques décoratives",
-        labelEn: "Decorative Metal Doors",
-        href: "#product-decorative-metal-doors",
-      },
-      {
-        labelFr: "Portes industrielles découpées laser",
-        labelEn: "Industrial Laser-Cut Doors",
-        href: "#product-industrial-laser-cut-doors",
+        labelFr: "Portes et motifs laser",
+        labelEn: "Laser Doors / Motifs",
+        items: [
+          {
+            labelFr: "Motif E63",
+            labelEn: "Motif E63",
+            href: "#product-motif-e63",
+          },
+          {
+            labelFr: "Motif E02",
+            labelEn: "Motif E02",
+            href: "#product-motif-e02",
+          },
+          {
+            labelFr: "Motif E57",
+            labelEn: "Motif E57",
+            href: "#product-motif-e57",
+          },
+          {
+            labelFr: "Motif E88",
+            labelEn: "Motif E88",
+            href: "#product-motif-e88",
+          },
+          {
+            labelFr: "Motif E14",
+            labelEn: "Motif E14",
+            href: "#product-motif-e14",
+          },
+          {
+            labelFr: "Doors E42",
+            labelEn: "Doors E42",
+            href: "#product-doors-e42",
+          },
+          {
+            labelFr: "Doors E01",
+            labelEn: "Doors E01",
+            href: "#product-doors-e01",
+          },
+        ],
       },
     ],
   },
@@ -160,41 +265,32 @@ const productMenu: ProductMenuGroup[] = [
     key: "metal-shutter",
     labelFr: "Rideaux métalliques",
     labelEn: "Metal Shutter",
-    items: [
+    sections: [
       {
-        labelFr: "Lames finales",
-        labelEn: "Final Slats",
-        href: "#product-final-slats",
-      },
-      {
-        labelFr: "Coulisses pour rideaux métalliques",
-        labelEn: "Metal Shutter Tracks",
-        href: "#product-metal-shutter-tracks",
-      },
-      {
-        labelFr: "Lames plates de rideaux métalliques",
-        labelEn: "Flat Metal Curtain Slats",
-        href: "#product-flat-metal-curtain-slats",
-      },
-      {
-        labelFr: "Lame courbée type C",
-        labelEn: "Curved Slat Type C",
-        href: "#product-curved-slat-type-c",
-      },
-      {
-        labelFr: "Moteurs pour rideaux métalliques",
-        labelEn: "Metal Shutter Motors",
-        href: "#product-metal-shutter-motors",
-      },
-      {
-        labelFr: "Axes pour rideaux métalliques",
-        labelEn: "Metal Shutter Axes",
-        href: "#product-metal-shutter-axes",
-      },
-      {
-        labelFr: "Accessoires pour rideaux métalliques",
-        labelEn: "Metal Shutter Accessories",
-        href: "#product-metal-shutter-accessories",
+        labelFr: "Produits rideaux métalliques",
+        labelEn: "Metal Shutter Products",
+        items: [
+          {
+            labelFr: "Lames finales",
+            labelEn: "Final Slats",
+            href: "#product-final-slats",
+          },
+          {
+            labelFr: "Coulisses pour rideaux métalliques",
+            labelEn: "Metal Shutter Tracks",
+            href: "#product-metal-shutter-tracks",
+          },
+          {
+            labelFr: "Lames plates de rideaux métalliques",
+            labelEn: "Flat Metal Curtain Slats",
+            href: "#product-flat-metal-curtain-slats",
+          },
+          {
+            labelFr: "Lame courbée type C",
+            labelEn: "Curved Slat Type C",
+            href: "#product-curved-slat-type-c",
+          },
+        ],
       },
     ],
   },
@@ -469,22 +565,37 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
                           })}
                         </div>
 
-                        <div className="ml-2 w-80 rounded-xl bg-[#075f96] p-2">
-                          {activeGroup.items.map((subItem) => {
-                            const itemLabel =
-                              lang === "fr"
-                                ? subItem.labelFr
-                                : subItem.labelEn;
+                        <div className="ml-2 max-h-[560px] w-[430px] overflow-y-auto rounded-xl bg-[#075f96] p-3">
+                          {activeGroup.sections.map((section) => {
+                            const sectionLabel =
+                              lang === "fr" ? section.labelFr : section.labelEn;
 
                             return (
-                              <a
-                                key={itemLabel}
-                                href={subItem.href}
-                                onClick={() => setProductsOpen(false)}
-                                className="block rounded-xl px-5 py-3 text-sm font-semibold text-blue-50 transition hover:bg-white/15 hover:text-white"
-                              >
-                                {itemLabel}
-                              </a>
+                              <div key={sectionLabel} className="mb-3 last:mb-0">
+                                <p className="px-4 pb-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-200">
+                                  {sectionLabel}
+                                </p>
+
+                                <div className="grid gap-1">
+                                  {section.items.map((subItem) => {
+                                    const itemLabel =
+                                      lang === "fr"
+                                        ? subItem.labelFr
+                                        : subItem.labelEn;
+
+                                    return (
+                                      <a
+                                        key={itemLabel}
+                                        href={subItem.href}
+                                        onClick={() => setProductsOpen(false)}
+                                        className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-blue-50 transition hover:bg-white/15 hover:text-white"
+                                      >
+                                        {itemLabel}
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
                             );
                           })}
                         </div>
@@ -676,7 +787,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.22 }}
-                            className="mt-2 overflow-hidden rounded-2xl bg-[#075f96] p-3 text-white"
+                            className="mt-2 max-h-[65vh] overflow-y-auto rounded-2xl bg-[#075f96] p-3 text-white"
                           >
                             {productMenu.map((group) => {
                               const groupLabel =
@@ -688,25 +799,43 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
                                     {groupLabel}
                                   </p>
 
-                                  <div className="grid gap-1">
-                                    {group.items.map((subItem) => {
-                                      const itemLabel =
-                                        lang === "fr"
-                                          ? subItem.labelFr
-                                          : subItem.labelEn;
+                                  {group.sections.map((section) => {
+                                    const sectionLabel =
+                                      lang === "fr"
+                                        ? section.labelFr
+                                        : section.labelEn;
 
-                                      return (
-                                        <a
-                                          key={itemLabel}
-                                          href={subItem.href}
-                                          onClick={closeMobileMenu}
-                                          className="rounded-xl px-3 py-2 text-sm font-semibold text-blue-50 hover:bg-white/10"
-                                        >
-                                          {itemLabel}
-                                        </a>
-                                      );
-                                    })}
-                                  </div>
+                                    return (
+                                      <div
+                                        key={sectionLabel}
+                                        className="mb-3 last:mb-0"
+                                      >
+                                        <p className="px-3 pb-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-200/80">
+                                          {sectionLabel}
+                                        </p>
+
+                                        <div className="grid gap-1">
+                                          {section.items.map((subItem) => {
+                                            const itemLabel =
+                                              lang === "fr"
+                                                ? subItem.labelFr
+                                                : subItem.labelEn;
+
+                                            return (
+                                              <a
+                                                key={itemLabel}
+                                                href={subItem.href}
+                                                onClick={closeMobileMenu}
+                                                className="rounded-xl px-3 py-2 text-sm font-semibold text-blue-50 hover:bg-white/10"
+                                              >
+                                                {itemLabel}
+                                              </a>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               );
                             })}

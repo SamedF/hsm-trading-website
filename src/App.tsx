@@ -12,9 +12,24 @@ import QuoteForm from "./components/QuoteForm";
 import Footer from "./components/Footer";
 import ChatBubble from "./components/ChatBubble";
 
+function getSavedLanguage(): Lang {
+  const savedLang = localStorage.getItem("hsm-language");
+
+  if (savedLang === "fr" || savedLang === "en") {
+    return savedLang;
+  }
+
+  return "fr";
+}
+
 export default function App() {
-  const [lang, setLang] = useState<Lang>("fr");
+  const [lang, setLangState] = useState<Lang>(getSavedLanguage);
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+
+  function setLang(nextLang: Lang) {
+    localStorage.setItem("hsm-language", nextLang);
+    setLangState(nextLang);
+  }
 
   function handleLanguageChange(nextLang: Lang) {
     if (nextLang === lang || isChangingLanguage) return;
@@ -23,19 +38,20 @@ export default function App() {
 
     window.setTimeout(() => {
       setLang(nextLang);
-    }, 220);
+    }, 180);
 
     window.setTimeout(() => {
       setIsChangingLanguage(false);
-    }, 720);
+    }, 560);
   }
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    localStorage.setItem("hsm-language", lang);
   }, [lang]);
 
   return (
-    <div className="min-h-screen bg-white text-slate-950">
+    <div className="no-drag min-h-screen overflow-x-hidden bg-white text-slate-950">
       <Navbar lang={lang} setLang={handleLanguageChange} />
 
       <AnimatePresence mode="wait">
@@ -43,23 +59,21 @@ export default function App() {
           key={lang}
           initial={{
             opacity: 0,
-            y: 18,
-            filter: "blur(8px)",
+            y: 12,
           }}
           animate={{
             opacity: 1,
             y: 0,
-            filter: "blur(0px)",
           }}
           exit={{
             opacity: 0,
-            y: -18,
-            filter: "blur(8px)",
+            y: -12,
           }}
           transition={{
-            duration: 0.48,
+            duration: 0.38,
             ease: [0.22, 1, 0.36, 1],
           }}
+          className="overflow-x-hidden"
         >
           <Hero lang={lang} />
           <About lang={lang} />
@@ -76,59 +90,41 @@ export default function App() {
       <AnimatePresence>
         {isChangingLanguage && (
           <motion.div
-            className="pointer-events-none fixed inset-0 z-[999] flex items-center justify-center bg-[#0f3347]/35 backdrop-blur-sm"
+            className="pointer-events-none fixed inset-0 z-[999] flex items-center justify-center bg-[#0f3347]/25 px-5 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
+            transition={{ duration: 0.18 }}
           >
             <motion.div
-              initial={{ scale: 0.86, opacity: 0, y: 14 }}
+              initial={{ scale: 0.94, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.92, opacity: 0, y: -10 }}
-              transition={{ duration: 0.28, ease: "easeOut" }}
-              className="rounded-[2rem] border border-white/20 bg-white px-7 py-5 text-center shadow-2xl shadow-slate-950/20"
+              exit={{ scale: 0.96, opacity: 0, y: -8 }}
+              transition={{ duration: 0.24, ease: "easeOut" }}
+              className="w-full max-w-xs rounded-[1.5rem] border border-white/20 bg-white px-6 py-5 text-center shadow-2xl shadow-slate-950/20"
             >
-              <p className="text-sm font-black uppercase tracking-[0.24em] text-[#e68613]">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#e68613]">
                 HSM Trading
               </p>
 
-              <p className="mt-2 text-xl font-black text-[#0f3347]">
-                {lang === "fr"
-                  ? "Switching to English"
-                  : "Passage au français"}
+              <p className="mt-2 text-lg font-black text-[#0f3347]">
+                {lang === "fr" ? "Switching to English" : "Passage au français"}
               </p>
 
-              <div className="mx-auto mt-4 flex w-32 items-center justify-center gap-2">
-                <motion.span
-                  className="h-2 w-2 rounded-full bg-[#e68613]"
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{
-                    duration: 0.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                <motion.span
-                  className="h-2 w-2 rounded-full bg-[#e68613]"
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{
-                    duration: 0.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 0.12,
-                  }}
-                />
-                <motion.span
-                  className="h-2 w-2 rounded-full bg-[#e68613]"
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{
-                    duration: 0.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 0.24,
-                  }}
-                />
+              <div className="mx-auto mt-4 flex items-center justify-center gap-2">
+                {[0, 0.12, 0.24].map((delay) => (
+                  <motion.span
+                    key={delay}
+                    className="h-2 w-2 rounded-full bg-[#e68613]"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{
+                      duration: 0.55,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay,
+                    }}
+                  />
+                ))}
               </div>
             </motion.div>
           </motion.div>

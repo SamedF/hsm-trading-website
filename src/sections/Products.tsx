@@ -37,6 +37,7 @@ export default function Products({ lang }: ProductsProps) {
 
   function getCategoryLabel(categoryKey: string) {
     const category = productCategories.find((item) => item.key === categoryKey);
+
     if (!category) return categoryKey;
 
     return lang === "fr" ? category.labelFr : category.labelEn;
@@ -113,15 +114,15 @@ export default function Products({ lang }: ProductsProps) {
         <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600">
           {lang === "fr" ? (
             <>
-              <strong className="text-slate-950">Produits HSM :</strong>{" "}
-              acier, aluminium, garde-corps, portes laser et rideaux
-              métalliques avec fiches techniques et demande de devis.
+              <strong className="text-slate-950">Catalogue produits HSM :</strong>{" "}
+              acier, aluminium, moteurs, axes, moustiquaires, garde-corps,
+              portes laser et rideaux métalliques.
             </>
           ) : (
             <>
-              <strong className="text-slate-950">HSM Products:</strong> steel,
-              aluminium, guardrails, laser doors and metal shutters with
-              technical sheets and quote request.
+              <strong className="text-slate-950">HSM product catalog:</strong>{" "}
+              steel, aluminium, engines, axes, fly screens, guardrails, laser
+              doors and metal shutters.
             </>
           )}
         </div>
