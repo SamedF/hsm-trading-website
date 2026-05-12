@@ -29,19 +29,9 @@ const productMenu: ProductMenuGroup[] = [
     labelEn: "Steel",
     items: [
       {
-        labelFr: "Tôles d’acier",
-        labelEn: "Steel Sheets",
-        href: "#product-steel-sheets",
-      },
-      {
         labelFr: "Feuillards d’acier",
         labelEn: "Steel Strips",
         href: "#product-steel-strips",
-      },
-      {
-        labelFr: "Poutrelles en acier",
-        labelEn: "Steel Beams",
-        href: "#product-steel-beams",
       },
       {
         labelFr: "Tubes ronds",
@@ -49,9 +39,14 @@ const productMenu: ProductMenuGroup[] = [
         href: "#product-round-tubes",
       },
       {
-        labelFr: "Tubes carrés",
-        labelEn: "Square Tubes",
-        href: "#product-square-tubes",
+        labelFr: "Tôles d’acier",
+        labelEn: "Steel Sheets",
+        href: "#product-steel-sheets",
+      },
+      {
+        labelFr: "Poutrelles en acier",
+        labelEn: "Steel Beams",
+        href: "#product-steel-beams",
       },
       {
         labelFr: "Panneaux sandwich",
@@ -59,9 +54,9 @@ const productMenu: ProductMenuGroup[] = [
         href: "#product-sandwich-panels",
       },
       {
-        labelFr: "Profilés métalliques",
-        labelEn: "Metal Profiles",
-        href: "#product-metal-profiles",
+        labelFr: "Tubes carrés",
+        labelEn: "Square Tubes",
+        href: "#product-square-tubes",
       },
     ],
   },
@@ -71,14 +66,14 @@ const productMenu: ProductMenuGroup[] = [
     labelEn: "Aluminium",
     items: [
       {
-        labelFr: "Accessoires aluminium",
-        labelEn: "Aluminium Accessories",
-        href: "#product-aluminium-accessories",
-      },
-      {
         labelFr: "Profilés aluminium",
         labelEn: "Aluminium Profiles",
         href: "#product-aluminium-profiles",
+      },
+      {
+        labelFr: "Accessoires aluminium",
+        labelEn: "Aluminium Accessories",
+        href: "#product-aluminium-accessories",
       },
       {
         labelFr: "Systèmes fenêtres aluminium",
@@ -86,9 +81,51 @@ const productMenu: ProductMenuGroup[] = [
         href: "#product-aluminium-window-systems",
       },
       {
+        labelFr: "Poignées de fenêtres",
+        labelEn: "Window Handles",
+        href: "#product-window-handles",
+      },
+      {
+        labelFr: "Serrures de portes",
+        labelEn: "Door Locks",
+        href: "#product-door-locks",
+      },
+      {
+        labelFr: "Serrures à crochet",
+        labelEn: "Hook Locks",
+        href: "#product-hook-locks",
+      },
+      {
+        labelFr: "Cylindres",
+        labelEn: "Cylinders",
+        href: "#product-cylinders",
+      },
+      {
+        labelFr: "Ouvre-portes électriques",
+        labelEn: "Electric Door Openers",
+        href: "#product-electric-door-openers",
+      },
+      {
+        labelFr: "Moustiquaires",
+        labelEn: "Fly Screens",
+        href: "#product-fly-screens",
+      },
+    ],
+  },
+  {
+    key: "guardrails",
+    labelFr: "Garde-corps",
+    labelEn: "Guardrails",
+    items: [
+      {
         labelFr: "Garde-corps aluminium",
         labelEn: "Aluminium Guardrails",
         href: "#product-aluminium-guardrails",
+      },
+      {
+        labelFr: "Garde-corps Crystal Line",
+        labelEn: "Crystal Line Guardrails",
+        href: "#product-crystal-line-guardrails",
       },
     ],
   },
@@ -98,19 +135,24 @@ const productMenu: ProductMenuGroup[] = [
     labelEn: "Laser Doors",
     items: [
       {
-        labelFr: "Portes laser sur mesure",
-        labelEn: "Custom Laser Doors",
-        href: "#product-custom-laser-doors",
+        labelFr: "Motifs décoratifs laser",
+        labelEn: "Laser Cut Decorative Motifs",
+        href: "#product-laser-cut-decorative-motifs",
       },
       {
-        labelFr: "Portes décoratives métalliques",
+        labelFr: "Panneaux laser sur mesure",
+        labelEn: "Custom Laser Panels",
+        href: "#product-custom-laser-panels",
+      },
+      {
+        labelFr: "Portes métalliques décoratives",
         labelEn: "Decorative Metal Doors",
         href: "#product-decorative-metal-doors",
       },
       {
-        labelFr: "Portes métalliques industrielles",
-        labelEn: "Industrial Metal Doors",
-        href: "#product-industrial-metal-doors",
+        labelFr: "Portes industrielles découpées laser",
+        labelEn: "Industrial Laser-Cut Doors",
+        href: "#product-industrial-laser-cut-doors",
       },
     ],
   },
@@ -120,14 +162,24 @@ const productMenu: ProductMenuGroup[] = [
     labelEn: "Metal Shutter",
     items: [
       {
-        labelFr: "Lames de rideaux métalliques",
-        labelEn: "Metal Shutter Slats",
-        href: "#product-metal-shutter-slats",
+        labelFr: "Lames finales",
+        labelEn: "Final Slats",
+        href: "#product-final-slats",
       },
       {
-        labelFr: "Guides de rideaux métalliques",
-        labelEn: "Metal Shutter Guides",
-        href: "#product-metal-shutter-guides",
+        labelFr: "Coulisses pour rideaux métalliques",
+        labelEn: "Metal Shutter Tracks",
+        href: "#product-metal-shutter-tracks",
+      },
+      {
+        labelFr: "Lames plates de rideaux métalliques",
+        labelEn: "Flat Metal Curtain Slats",
+        href: "#product-flat-metal-curtain-slats",
+      },
+      {
+        labelFr: "Lame courbée type C",
+        labelEn: "Curved Slat Type C",
+        href: "#product-curved-slat-type-c",
       },
       {
         labelFr: "Moteurs pour rideaux métalliques",
@@ -143,38 +195,6 @@ const productMenu: ProductMenuGroup[] = [
         labelFr: "Accessoires pour rideaux métalliques",
         labelEn: "Metal Shutter Accessories",
         href: "#product-metal-shutter-accessories",
-      },
-    ],
-  },
-  {
-    key: "accessories",
-    labelFr: "Accessoires",
-    labelEn: "Accessories",
-    items: [
-      {
-        labelFr: "Serrures de portes",
-        labelEn: "Door Locks",
-        href: "#product-door-locks",
-      },
-      {
-        labelFr: "Poignées de fenêtres",
-        labelEn: "Window Handles",
-        href: "#product-window-handles",
-      },
-      {
-        labelFr: "Ouvre-portes électriques",
-        labelEn: "Electric Door Openers",
-        href: "#product-electric-door-openers",
-      },
-      {
-        labelFr: "Serrures à crochet",
-        labelEn: "Hook Locks",
-        href: "#product-hook-locks",
-      },
-      {
-        labelFr: "Cylindres",
-        labelEn: "Cylinders",
-        href: "#product-cylinders",
       },
     ],
   },
