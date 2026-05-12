@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import type { Variants } from "framer-motion";
 import { useEffect, useState } from "react";
-import { Menu, Phone, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Menu, Phone, X } from "lucide-react";
 import { company, content, navItems } from "../data/siteData";
 import type { Lang } from "../data/siteData";
 import logo from "../assets/hsm-logo.jpeg";
@@ -10,6 +10,175 @@ type NavbarProps = {
   lang: Lang;
   setLang: (lang: Lang) => void;
 };
+
+type ProductMenuGroup = {
+  key: string;
+  labelFr: string;
+  labelEn: string;
+  items: {
+    labelFr: string;
+    labelEn: string;
+    href: string;
+  }[];
+};
+
+const productMenu: ProductMenuGroup[] = [
+  {
+    key: "steel",
+    labelFr: "Acier",
+    labelEn: "Steel",
+    items: [
+      {
+        labelFr: "Tôles d’acier",
+        labelEn: "Steel Sheets",
+        href: "#product-steel-sheets",
+      },
+      {
+        labelFr: "Feuillards d’acier",
+        labelEn: "Steel Strips",
+        href: "#product-steel-strips",
+      },
+      {
+        labelFr: "Poutrelles en acier",
+        labelEn: "Steel Beams",
+        href: "#product-steel-beams",
+      },
+      {
+        labelFr: "Tubes ronds",
+        labelEn: "Round Tubes",
+        href: "#product-round-tubes",
+      },
+      {
+        labelFr: "Tubes carrés",
+        labelEn: "Square Tubes",
+        href: "#product-square-tubes",
+      },
+      {
+        labelFr: "Panneaux sandwich",
+        labelEn: "Sandwich Panels",
+        href: "#product-sandwich-panels",
+      },
+      {
+        labelFr: "Profilés métalliques",
+        labelEn: "Metal Profiles",
+        href: "#product-metal-profiles",
+      },
+    ],
+  },
+  {
+    key: "aluminium",
+    labelFr: "Aluminium",
+    labelEn: "Aluminium",
+    items: [
+      {
+        labelFr: "Accessoires aluminium",
+        labelEn: "Aluminium Accessories",
+        href: "#product-aluminium-accessories",
+      },
+      {
+        labelFr: "Profilés aluminium",
+        labelEn: "Aluminium Profiles",
+        href: "#product-aluminium-profiles",
+      },
+      {
+        labelFr: "Systèmes fenêtres aluminium",
+        labelEn: "Aluminium Window Systems",
+        href: "#product-aluminium-window-systems",
+      },
+      {
+        labelFr: "Garde-corps aluminium",
+        labelEn: "Aluminium Guardrails",
+        href: "#product-aluminium-guardrails",
+      },
+    ],
+  },
+  {
+    key: "laser-doors",
+    labelFr: "Portes laser",
+    labelEn: "Laser Doors",
+    items: [
+      {
+        labelFr: "Portes laser sur mesure",
+        labelEn: "Custom Laser Doors",
+        href: "#product-custom-laser-doors",
+      },
+      {
+        labelFr: "Portes décoratives métalliques",
+        labelEn: "Decorative Metal Doors",
+        href: "#product-decorative-metal-doors",
+      },
+      {
+        labelFr: "Portes métalliques industrielles",
+        labelEn: "Industrial Metal Doors",
+        href: "#product-industrial-metal-doors",
+      },
+    ],
+  },
+  {
+    key: "metal-shutter",
+    labelFr: "Rideaux métalliques",
+    labelEn: "Metal Shutter",
+    items: [
+      {
+        labelFr: "Lames de rideaux métalliques",
+        labelEn: "Metal Shutter Slats",
+        href: "#product-metal-shutter-slats",
+      },
+      {
+        labelFr: "Guides de rideaux métalliques",
+        labelEn: "Metal Shutter Guides",
+        href: "#product-metal-shutter-guides",
+      },
+      {
+        labelFr: "Moteurs pour rideaux métalliques",
+        labelEn: "Metal Shutter Motors",
+        href: "#product-metal-shutter-motors",
+      },
+      {
+        labelFr: "Axes pour rideaux métalliques",
+        labelEn: "Metal Shutter Axes",
+        href: "#product-metal-shutter-axes",
+      },
+      {
+        labelFr: "Accessoires pour rideaux métalliques",
+        labelEn: "Metal Shutter Accessories",
+        href: "#product-metal-shutter-accessories",
+      },
+    ],
+  },
+  {
+    key: "accessories",
+    labelFr: "Accessoires",
+    labelEn: "Accessories",
+    items: [
+      {
+        labelFr: "Serrures de portes",
+        labelEn: "Door Locks",
+        href: "#product-door-locks",
+      },
+      {
+        labelFr: "Poignées de fenêtres",
+        labelEn: "Window Handles",
+        href: "#product-window-handles",
+      },
+      {
+        labelFr: "Ouvre-portes électriques",
+        labelEn: "Electric Door Openers",
+        href: "#product-electric-door-openers",
+      },
+      {
+        labelFr: "Serrures à crochet",
+        labelEn: "Hook Locks",
+        href: "#product-hook-locks",
+      },
+      {
+        labelFr: "Cylindres",
+        labelEn: "Cylinders",
+        href: "#product-cylinders",
+      },
+    ],
+  },
+];
 
 function FlagIcon({ lang }: { lang: Lang }) {
   if (lang === "fr") {
@@ -124,10 +293,18 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
-  
+  const [productsOpen, setProductsOpen] = useState(false);
+  const [activeProductGroup, setActiveProductGroup] = useState(
+    productMenu[0].key
+  );
+  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
 
   const t = content[lang];
   const nextLang = lang === "fr" ? "en" : "fr";
+
+  const activeGroup =
+    productMenu.find((group) => group.key === activeProductGroup) ||
+    productMenu[0];
 
   useEffect(() => {
     function handleScroll() {
@@ -155,11 +332,12 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
   }, []);
 
   function switchLanguage() {
-  setLang(nextLang);
-}
+    setLang(nextLang);
+  }
 
   function closeMobileMenu() {
     setOpen(false);
+    setMobileProductsOpen(false);
   }
 
   return (
@@ -190,6 +368,7 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
           <motion.img
             src={logo}
             alt="HSM Trading"
+            draggable={false}
             className="h-11 w-auto max-w-[210px] object-contain"
             animate={{
               height: scrolled ? 40 : 44,
@@ -205,6 +384,96 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
           {navItems.map((item) => {
             const sectionId = item.href.replace("#", "");
             const isActive = activeSection === sectionId;
+
+            if (item.key === "products") {
+              return (
+                <motion.div
+                  key={item.key}
+                  variants={navItemVariants}
+                  className="relative"
+                  onMouseEnter={() => setProductsOpen(true)}
+                  onMouseLeave={() => setProductsOpen(false)}
+                >
+                  <button
+                    type="button"
+                    className={`group relative inline-flex items-center gap-1 whitespace-nowrap rounded-xl px-3 py-2 text-[13px] font-black transition 2xl:px-4 2xl:text-sm ${
+                      isActive
+                        ? "text-[#e68613]"
+                        : "text-slate-700 hover:text-[#e68613]"
+                    }`}
+                  >
+                    {t.nav.products}
+                    <ChevronDown
+                      size={15}
+                      className={`transition duration-300 ${
+                        productsOpen ? "rotate-180" : ""
+                      }`}
+                    />
+
+                    <span className="absolute bottom-1 left-3 h-[2px] w-0 rounded-full bg-[#e68613] transition-all duration-300 group-hover:w-[calc(100%-1.5rem)]" />
+                  </button>
+
+                  <AnimatePresence>
+                    {productsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        className="absolute left-0 top-full mt-3 flex rounded-2xl bg-[#075f96] p-2 text-white shadow-2xl shadow-slate-900/20"
+                      >
+                        <div className="w-64">
+                          {productMenu.map((group) => {
+                            const groupLabel =
+                              lang === "fr" ? group.labelFr : group.labelEn;
+                            const isGroupActive =
+                              activeProductGroup === group.key;
+
+                            return (
+                              <button
+                                key={group.key}
+                                type="button"
+                                onMouseEnter={() =>
+                                  setActiveProductGroup(group.key)
+                                }
+                                className={`flex w-full items-center justify-between rounded-xl px-5 py-3 text-left text-sm font-bold transition ${
+                                  isGroupActive
+                                    ? "bg-white/15 text-white"
+                                    : "text-blue-50 hover:bg-white/10"
+                                }`}
+                              >
+                                {groupLabel}
+                                <ChevronRight size={16} />
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="ml-2 w-80 rounded-xl bg-[#075f96] p-2">
+                          {activeGroup.items.map((subItem) => {
+                            const itemLabel =
+                              lang === "fr"
+                                ? subItem.labelFr
+                                : subItem.labelEn;
+
+                            return (
+                              <a
+                                key={itemLabel}
+                                href={subItem.href}
+                                onClick={() => setProductsOpen(false)}
+                                className="block rounded-xl px-5 py-3 text-sm font-semibold text-blue-50 transition hover:bg-white/15 hover:text-white"
+                              >
+                                {itemLabel}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            }
 
             return (
               <motion.a
@@ -245,39 +514,39 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
           variants={navContainerVariants}
         >
           <button
-  onClick={switchLanguage}
-  className="relative top-[2px] inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[#e68613]/40 hover:bg-orange-50"
-  aria-label="Switch language"
-  type="button"
->
-  <AnimatePresence mode="wait" initial={false}>
-    <motion.span
-      key={nextLang}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{
-        opacity: 1,
-        scale: 1,
-      }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className="inline-flex"
-    >
-      <FlagIcon lang={nextLang} />
-    </motion.span>
-  </AnimatePresence>
+            onClick={switchLanguage}
+            className="relative top-[2px] inline-flex h-11 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[#e68613]/40 hover:bg-orange-50"
+            aria-label="Switch language"
+            type="button"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={nextLang}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="inline-flex"
+              >
+                <FlagIcon lang={nextLang} />
+              </motion.span>
+            </AnimatePresence>
 
-  <AnimatePresence mode="wait" initial={false}>
-    <motion.span
-      key={lang}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.18 }}
-    >
-      {lang === "fr" ? "EN" : "FR"}
-    </motion.span>
-  </AnimatePresence>
-</button>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={lang}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.18 }}
+              >
+                {lang === "fr" ? "EN" : "FR"}
+              </motion.span>
+            </AnimatePresence>
+          </button>
 
           <motion.a
             variants={navItemVariants}
@@ -360,18 +629,87 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
             className="overflow-hidden border-t border-slate-200 bg-white xl:hidden"
           >
             <motion.div className="flex flex-col gap-2 px-5 py-5">
-              {navItems.map((item) => (
-                <motion.a
-                  key={item.key}
-                  href={item.href}
-                  variants={mobileItemVariants}
-                  onClick={closeMobileMenu}
-                  whileTap={{ scale: 0.98 }}
-                  className="rounded-2xl px-4 py-3 font-black text-slate-700 transition hover:bg-slate-100"
-                >
-                  {t.nav[item.key as keyof typeof t.nav]}
-                </motion.a>
-              ))}
+              {navItems.map((item) => {
+                if (item.key === "products") {
+                  return (
+                    <motion.div key={item.key} variants={mobileItemVariants}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMobileProductsOpen((current) => !current)
+                        }
+                        className="flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left font-black text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {t.nav.products}
+                        <ChevronDown
+                          size={18}
+                          className={`transition ${
+                            mobileProductsOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+
+                      <AnimatePresence>
+                        {mobileProductsOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.22 }}
+                            className="mt-2 overflow-hidden rounded-2xl bg-[#075f96] p-3 text-white"
+                          >
+                            {productMenu.map((group) => {
+                              const groupLabel =
+                                lang === "fr" ? group.labelFr : group.labelEn;
+
+                              return (
+                                <div key={group.key} className="py-2">
+                                  <p className="px-3 pb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-200">
+                                    {groupLabel}
+                                  </p>
+
+                                  <div className="grid gap-1">
+                                    {group.items.map((subItem) => {
+                                      const itemLabel =
+                                        lang === "fr"
+                                          ? subItem.labelFr
+                                          : subItem.labelEn;
+
+                                      return (
+                                        <a
+                                          key={itemLabel}
+                                          href={subItem.href}
+                                          onClick={closeMobileMenu}
+                                          className="rounded-xl px-3 py-2 text-sm font-semibold text-blue-50 hover:bg-white/10"
+                                        >
+                                          {itemLabel}
+                                        </a>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                }
+
+                return (
+                  <motion.a
+                    key={item.key}
+                    href={item.href}
+                    variants={mobileItemVariants}
+                    onClick={closeMobileMenu}
+                    whileTap={{ scale: 0.98 }}
+                    className="rounded-2xl px-4 py-3 font-black text-slate-700 transition hover:bg-slate-100"
+                  >
+                    {t.nav[item.key as keyof typeof t.nav]}
+                  </motion.a>
+                );
+              })}
 
               <motion.button
                 onClick={switchLanguage}
