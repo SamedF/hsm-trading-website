@@ -13,7 +13,7 @@ export type Lang = "fr" | "en";
 export const company = {
   name: "HSM Trading",
   email: "import@hsm.tn",
-  phone: "+216 58 400 253",
+  phone: "+216 58 400 253  |  +216 58 400 228",
   whatsapp: "21658400253",
   location: "63 lotissement Ennakhil, Kantaoui 4042, Sousse, Tunisia",
   shortLocation: "Kantaoui 4042, Sousse, Tunisia",
