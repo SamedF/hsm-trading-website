@@ -3,6 +3,7 @@ import type { Variants } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, Menu, Phone, X } from "lucide-react";
 import { company, content, navItems } from "../data/siteData";
+import { createWhatsAppLink, getDefaultWhatsAppMessage } from "../utils/whatsapp";
 import type { Lang } from "../data/siteData";
 import logo from "../assets/hsm-logo.jpeg";
 
@@ -679,19 +680,41 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
             </AnimatePresence>
           </button>
 
-          <motion.a
+          <motion.div
             variants={navItemVariants}
-            href={`tel:${company.phone}`}
-            whileHover={{
-              y: -2,
-              scale: 1.025,
-            }}
-            whileTap={{ scale: 0.96 }}
-            className="hidden h-11 items-center gap-2 rounded-2xl px-3 text-sm font-black text-slate-700 transition hover:bg-slate-100 2xl:inline-flex"
+            className="hidden items-center gap-3 rounded-2xl px-3 py-2 text-slate-700 2xl:flex"
           >
-            <Phone size={16} />
-            <span>{company.phone}</span>
-          </motion.a>
+            <Phone size={16} className="shrink-0 text-slate-600" />
+            {company.whatsappContacts.map((contact, index) => (
+              <div key={contact.key} className="flex items-center gap-3">
+                <motion.a
+                  href={createWhatsAppLink(
+                    contact.key,
+                    getDefaultWhatsAppMessage(contact.key, lang)
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`${contact.label} - ${
+                    contact.key === "steel" ? "Metal / Steel" : "Aluminum"
+                  } WhatsApp`}
+                  whileHover={{ y: -2, scale: 1.025 }}
+                  whileTap={{ scale: 0.96 }}
+                  className="flex flex-col leading-tight transition hover:text-[#e68613]"
+                >
+                  <span className="text-[10px] font-black uppercase tracking-wide text-slate-500">
+                    {contact.key === "steel" ? "Metal / Steel" : "Aluminum"}
+                  </span>
+                  <span className="text-sm font-black text-slate-900">
+                    {contact.label}
+                  </span>
+                </motion.a>
+
+                {index < company.whatsappContacts.length - 1 && (
+                  <span className="font-black text-slate-300">|</span>
+                )}
+              </div>
+            ))}
+          </motion.div>
 
           <motion.a
             variants={navItemVariants}
@@ -873,13 +896,39 @@ export default function Navbar({ lang, setLang }: NavbarProps) {
                 </span>
               </motion.button>
 
-              <motion.a
+              <motion.div
                 variants={mobileItemVariants}
-                href={`tel:${company.phone}`}
-                className="rounded-2xl px-4 py-3 font-black text-slate-700 transition hover:bg-slate-100"
+                className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
               >
-                {company.phone}
-              </motion.a>
+                <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-700">
+                  <Phone size={16} />
+                  WhatsApp
+                </div>
+                <div className="flex flex-col gap-3">
+                  {company.whatsappContacts.map((contact) => (
+                    <motion.a
+                      key={contact.key}
+                      href={createWhatsAppLink(
+                        contact.key,
+                        getDefaultWhatsAppMessage(contact.key, lang)
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={closeMobileMenu}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 font-black text-slate-700 transition hover:bg-orange-50 hover:text-[#e68613]"
+                    >
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                          {contact.key === "steel" ? "Metal / Steel" : "Aluminum"}
+                        </span>
+                        <span>{contact.label}</span>
+                      </span>
+                      <ChevronRight size={17} />
+                    </motion.a>
+                  ))}
+                </div>
+              </motion.div>
 
               <motion.a
                 variants={mobileItemVariants}

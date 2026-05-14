@@ -4,6 +4,7 @@ import heroImage from "../assets/hero.jpeg";
 import logo from "../assets/hsm-logo.jpeg";
 import { company, content } from "../data/siteData";
 import type { Lang } from "../data/siteData";
+import { createWhatsAppLink, getDefaultWhatsAppMessage } from "../utils/whatsapp";
 
 type HeroProps = {
   lang: Lang;
@@ -102,7 +103,19 @@ export default function Hero({ lang }: HeroProps) {
       </div>
 
       <div className="relative border-t border-white/10 bg-white/5 px-5 py-4 text-center text-sm font-semibold text-slate-200">
-        {company.location} · {company.email} · {company.phone}
+        {company.location} · {company.email} · {company.whatsappContacts.map((contact) => (
+          <a
+            key={contact.key}
+            href={createWhatsAppLink(
+              contact.key,
+              getDefaultWhatsAppMessage(contact.key, lang)
+            )}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {contact.label}
+          </a>
+        ))}
       </div>
     </section>
   );

@@ -10,11 +10,32 @@ import {
 
 export type Lang = "fr" | "en";
 
+
+export const whatsappContacts = [
+  {
+    key: "steel",
+    label: "+216 58 400 253",
+    whatsapp: "21658400253",
+    inquiryFr: "Acier / Métal",
+    inquiryEn: "Steel / Metal",
+  },
+  {
+    key: "aluminium",
+    label: "+216 58 400 228",
+    whatsapp: "21658400228",
+    inquiryFr: "Aluminium",
+    inquiryEn: "Aluminium",
+  },
+] as const;
+
+export type WhatsAppInquiry = (typeof whatsappContacts)[number]["key"];
+
 export const company = {
   name: "HSM Trading",
   email: "import@hsm.tn",
-  phone: "+216 58 400 253  |  +216 58 400 228",
-  whatsapp: "21658400253",
+  phone: whatsappContacts.map((contact) => contact.label).join("  |  "),
+  whatsapp: whatsappContacts[0].whatsapp,
+  whatsappContacts,
   location: "63 lotissement Ennakhil, Kantaoui 4042, Sousse, Tunisia",
   shortLocation: "Kantaoui 4042, Sousse, Tunisia",
 };

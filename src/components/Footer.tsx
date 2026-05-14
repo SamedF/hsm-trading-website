@@ -1,5 +1,6 @@
 import { Mail, MapPin, Phone } from "lucide-react";
 import { company, content } from "../data/siteData";
+import { createWhatsAppLink, getDefaultWhatsAppMessage } from "../utils/whatsapp";
 import type { Lang } from "../data/siteData";
 import logo from "../assets/hsm-logo.jpeg";
 
@@ -36,10 +37,36 @@ export default function Footer({ lang }: FooterProps) {
         <div>
           <h4 className="font-black">{t.nav.contact}</h4>
           <div className="mt-5 space-y-4 text-slate-300">
-            <p className="flex gap-3">
+            <div className="flex gap-3">
               <Phone className="shrink-0 text-[#e68613]" size={18} />
-              {company.phone}
-            </p>
+              <div className="flex flex-wrap items-center gap-3">
+                {company.whatsappContacts.map((contact, index) => (
+                  <div key={contact.key} className="flex items-center gap-3">
+                    <a
+                      href={createWhatsAppLink(
+                        contact.key,
+                        getDefaultWhatsAppMessage(contact.key, lang)
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col leading-tight transition hover:text-white"
+                      aria-label={`${contact.label} - ${
+                        contact.key === "steel" ? "Metal / Steel" : "Aluminum"
+                      } WhatsApp`}
+                    >
+                      <span className="text-[11px] font-black uppercase tracking-wide text-slate-400">
+                        {contact.key === "steel" ? "Metal / Steel" : "Aluminum"}
+                      </span>
+                      <span className="font-bold text-white">{contact.label}</span>
+                    </a>
+
+                    {index < company.whatsappContacts.length - 1 && (
+                      <span className="font-black text-slate-600">|</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <p className="flex gap-3">
               <Mail className="shrink-0 text-[#e68613]" size={18} />

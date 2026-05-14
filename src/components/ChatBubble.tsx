@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Bot,
   CheckCircle2,
   MessageCircle,
+  Phone,
+  RotateCcw,
   Send,
   Sparkles,
   User,
@@ -11,127 +13,857 @@ import {
   Zap,
 } from "lucide-react";
 import { company, content } from "../data/siteData";
-import type { Lang } from "../data/siteData";
+import {
+  createWhatsAppLink,
+  getDefaultWhatsAppMessage,
+  getInquiryFromText,
+} from "../utils/whatsapp";
+import type { Lang, WhatsAppInquiry } from "../data/siteData";
 
 type ChatBubbleProps = {
   lang: Lang;
 };
 
+type ChatMode = "assistant" | "whatsapp";
+
 type ChatMessage = {
   role: "bot" | "user";
   text: string;
+  action?: "send_quote";
 };
 
-type ChatMode = "assistant" | "whatsapp";
+type QuoteStep =
+  | "department"
+  | "product"
+  | "quantity"
+  | "dimensions"
+  | "location"
+  | "details"
+  | "ready";
+
+type QuoteData = {
+  department: WhatsAppInquiry | null;
+  product: string;
+  quantity: string;
+  dimensions: string;
+  location: string;
+  details: string;
+};
+
+const emptyQuote: QuoteData = {
+  department: null,
+  product: "",
+  quantity: "",
+  dimensions: "",
+  location: "",
+  details: "",
+};
 
 const starterQuestions = {
   fr: [
-    "Je veux un devis pour des bobines d’acier",
-    "Je cherche des panneaux sandwich",
-    "Avez-vous des tôles d’acier disponibles ?",
+    "Je veux un devis métal / acier",
+    "Je veux un devis aluminium",
     "Quels produits propose HSM Trading ?",
+    "Quel numéro WhatsApp dois-je utiliser ?",
   ],
   en: [
-    "I need a quote for steel coils",
-    "I am looking for sandwich panels",
-    "Do you have steel sheets available?",
+    "I need a metal / steel quote",
+    "I need an aluminum quote",
     "What products does HSM Trading offer?",
+    "Which WhatsApp number should I use?",
   ],
 };
 
-function getBotAnswer(message: string, lang: Lang) {
-  const text = message.toLowerCase();
+const genericBadAnswers = [
+  "test",
+  "testing",
+  "asdf",
+  "qwerty",
+  "abc",
+  "abcd",
+  "hello",
+  "hi",
+  "hey",
+  "ok",
+  "okay",
+  "yes",
+  "yeah",
+  "yep",
+  "no",
+  "nope",
+  "oui",
+  "non",
+  "bonjour",
+  "salut",
+];
 
-  if (text.includes("bobine") || text.includes("coil")) {
-    return lang === "fr"
-      ? "HSM Trading propose des bobines d’acier pour la transformation, la fabrication et les applications industrielles. Pour un devis précis, indiquez l’épaisseur, la largeur, la quantité et le lieu de livraison."
-      : "HSM Trading offers steel coils for processing, manufacturing and industrial applications. For an accurate quote, please share thickness, width, quantity and delivery location.";
+function normalizeText(text: string) {
+  return text.toLowerCase().trim();
+}
+
+function hasNumber(text: string) {
+  return /\d/.test(text);
+}
+
+function wordCount(text: string) {
+  return normalizeText(text).split(/\s+/).filter(Boolean).length;
+}
+
+function isTooGeneric(text: string) {
+  const normalized = normalizeText(text);
+
+  if (!normalized) return true;
+  if (normalized.length < 3) return true;
+  if (genericBadAnswers.includes(normalized)) return true;
+
+  return false;
+}
+
+function includesAny(text: string, words: string[]) {
+  const normalized = normalizeText(text);
+  return words.some((word) => normalized.includes(word));
+}
+
+function detectDepartment(message: string): WhatsAppInquiry | null {
+  const text = normalizeText(message);
+
+  const aluminumWords = [
+    "aluminium",
+    "aluminum",
+    "alu",
+    "fenêtre",
+    "fenetre",
+    "window",
+    "moustiquaire",
+    "fly screen",
+    "flyscreen",
+    "fly-screen",
+    "garde-corps",
+    "guardrail",
+    "profile",
+    "profil",
+    "profiles",
+    "profils",
+  ];
+
+  const steelWords = [
+    "steel",
+    "metal",
+    "métal",
+    "acier",
+    "iron",
+    "coil",
+    "bobine",
+    "sheet",
+    "sheets",
+    "tôle",
+    "tole",
+    "tube",
+    "beam",
+    "poutrelle",
+    "sandwich",
+    "shutter",
+    "rideau",
+    "door",
+    "doors",
+    "porte",
+    "portes",
+  ];
+
+  if (includesAny(text, aluminumWords)) return "aluminium";
+  if (includesAny(text, steelWords)) return "steel";
+
+  return null;
+}
+
+function isQuoteRequest(message: string) {
+  return includesAny(message, [
+    "quote",
+    "quotation",
+    "price",
+    "pricing",
+    "devis",
+    "prix",
+    "cost",
+    "combien",
+    "need",
+    "want",
+    "cherche",
+    "besoin",
+    "demande",
+  ]);
+}
+
+function isContactRequest(message: string) {
+  return includesAny(message, [
+    "contact",
+    "phone",
+    "whatsapp",
+    "number",
+    "numéro",
+    "numero",
+    "call",
+    "appeler",
+    "téléphone",
+    "telephone",
+  ]);
+}
+
+function isProductQuestion(message: string) {
+  return includesAny(message, [
+    "product",
+    "products",
+    "produit",
+    "produits",
+    "offer",
+    "propose",
+    "catalog",
+    "catalogue",
+    "sell",
+    "vente",
+  ]);
+}
+
+function getDepartmentLabel(department: WhatsAppInquiry, lang: Lang) {
+  if (department === "aluminium") {
+    return lang === "fr" ? "Aluminium" : "Aluminum";
   }
 
-  if (
-    text.includes("tôle") ||
-    text.includes("tole") ||
-    text.includes("sheet")
-  ) {
-    return lang === "fr"
-      ? "Nous proposons des tôles d’acier pour la construction, la fabrication et les applications industrielles. Donnez-nous l’épaisseur, les dimensions et la quantité souhaitée."
-      : "We provide steel sheets for construction, manufacturing and industrial applications. Please send thickness, dimensions and required quantity.";
+  return lang === "fr" ? "Métal / Acier" : "Metal / Steel";
+}
+
+function getContactDetails() {
+  return company.whatsappContacts
+    .map((contact) => {
+      const label = contact.key === "steel" ? "Metal / Steel" : "Aluminum";
+      return `${label}: ${contact.label}`;
+    })
+    .join(" | ");
+}
+
+function getInitialMessage(lang: Lang) {
+  return lang === "fr"
+    ? "Bonjour, je suis l’assistant HSM. Je peux préparer votre demande de devis et choisir le bon service."
+    : "Hello, I am the HSM assistant. I can prepare your quote request and choose the right department.";
+}
+
+function validateDepartmentAnswer(text: string) {
+  return detectDepartment(text) !== null;
+}
+
+function validateProductAnswer(text: string, department: WhatsAppInquiry | null) {
+  const normalized = normalizeText(text);
+
+  if (isTooGeneric(normalized)) return false;
+
+  const questionLikeWords = [
+    "?",
+    "what",
+    "which",
+    "how",
+    "why",
+    "when",
+    "où",
+    "ou",
+    "comment",
+    "pourquoi",
+    "quel",
+    "quelle",
+  ];
+
+  if (questionLikeWords.some((word) => normalized.includes(word))) return false;
+
+  const productWords = [
+    "sheet",
+    "sheets",
+    "coil",
+    "coils",
+    "tube",
+    "tubes",
+    "profile",
+    "profiles",
+    "profil",
+    "profils",
+    "door",
+    "doors",
+    "porte",
+    "portes",
+    "window",
+    "windows",
+    "fenêtre",
+    "fenetre",
+    "guardrail",
+    "garde-corps",
+    "fly screen",
+    "moustiquaire",
+    "shutter",
+    "rideau",
+    "sandwich",
+    "beam",
+    "poutrelle",
+    "aluminum",
+    "aluminium",
+    "steel",
+    "metal",
+    "acier",
+    "métal",
+    "tole",
+    "tôle",
+    "inox",
+    "galvanized",
+    "galvanisé",
+  ];
+
+  const hasProductWord = includesAny(normalized, productWords);
+
+  if (department === "aluminium") {
+    const steelOnlyWords = ["steel", "acier", "métal", "metal", "coil", "bobine"];
+    if (
+      includesAny(normalized, steelOnlyWords) &&
+      !includesAny(normalized, ["aluminium", "aluminum", "alu"])
+    ) {
+      return false;
+    }
   }
 
-  if (
-    text.includes("sandwich") ||
-    text.includes("panel") ||
-    text.includes("panneaux")
-  ) {
-    return lang === "fr"
-      ? "Les panneaux sandwich HSM sont adaptés aux entrepôts, façades, toitures et bâtiments industriels. Précisez l’épaisseur, le type d’isolation et la surface totale."
-      : "HSM sandwich panels are suitable for warehouses, facades, roofing and industrial buildings. Please share thickness, insulation type and total surface area.";
+  if (department === "steel") {
+    const aluminumOnlyWords = ["aluminium", "aluminum", "alu"];
+    if (
+      includesAny(normalized, aluminumOnlyWords) &&
+      !includesAny(normalized, ["steel", "acier", "metal", "métal"])
+    ) {
+      return false;
+    }
   }
 
-  if (
-    text.includes("rideau") ||
-    text.includes("shutter") ||
-    text.includes("slats") ||
-    text.includes("guide")
-  ) {
-    return lang === "fr"
-      ? "HSM propose des lames et guides pour rideaux métalliques, adaptés aux projets commerciaux, industriels et résidentiels. Vous pouvez préciser le type de lame, les dimensions et la quantité."
-      : "HSM offers metal shutter slats and guides for commercial, industrial and residential projects. Please specify slat type, dimensions and quantity.";
+  if (hasProductWord) return true;
+  if (wordCount(normalized) >= 2 && normalized.length >= 6) return true;
+
+  return false;
+}
+
+function validateQuantityAnswer(text: string) {
+  const normalized = normalizeText(text);
+
+  if (isTooGeneric(normalized)) return false;
+
+  const contactWords = ["phone", "whatsapp", "contact", "numéro", "numero"];
+  if (includesAny(normalized, contactWords)) return false;
+
+  if (hasNumber(normalized)) return true;
+
+  const quantityWords = [
+    "one",
+    "two",
+    "three",
+    "ten",
+    "hundred",
+    "thousand",
+    "piece",
+    "pieces",
+    "pcs",
+    "meter",
+    "meters",
+    "metre",
+    "metres",
+    "mètre",
+    "mètres",
+    "ton",
+    "tons",
+    "tonne",
+    "tonnes",
+    "kg",
+    "kilogram",
+    "kilograms",
+    "few",
+    "many",
+    "some",
+    "plusieurs",
+    "beaucoup",
+    "carton",
+    "cartons",
+    "box",
+    "boxes",
+  ];
+
+  return includesAny(normalized, quantityWords);
+}
+
+function validateDimensionsAnswer(text: string) {
+  const normalized = normalizeText(text);
+
+  if (!normalized) return false;
+
+  const unsureWords = [
+    "not sure",
+    "not-sure",
+    "unsure",
+    "i don't know",
+    "i dont know",
+    "no idea",
+    "pas sûr",
+    "pas sur",
+    "je ne sais pas",
+  ];
+
+  if (includesAny(normalized, unsureWords)) return true;
+  if (isTooGeneric(normalized)) return false;
+
+  const irrelevantWords = [
+    "phone",
+    "whatsapp",
+    "contact",
+    "delivery",
+    "livraison",
+    "location",
+    "adresse",
+  ];
+
+  if (includesAny(normalized, irrelevantWords)) return false;
+
+  const dimensionPattern =
+    /(\d+\s?(mm|cm|m|meter|meters|metre|metres|mètre|mètres|kg|ton|tons|tonne|tonnes|gauge|epaisseur|épaisseur|thick|thickness))/i;
+
+  const sizePattern = /\d+\s?(x|×|\*)\s?\d+/i;
+
+  if (dimensionPattern.test(normalized)) return true;
+  if (sizePattern.test(normalized)) return true;
+
+  const referenceWords = [
+    "standard",
+    "custom",
+    "sur mesure",
+    "reference",
+    "référence",
+    "ref",
+    "model",
+    "modèle",
+    "modele",
+  ];
+
+  if (includesAny(normalized, referenceWords)) return true;
+
+  return false;
+}
+
+function validateLocationAnswer(text: string) {
+  const normalized = normalizeText(text);
+
+  if (isTooGeneric(normalized)) return false;
+  if (normalized.length < 4) return false;
+
+  const invalidLocationWords = [
+    "product",
+    "produit",
+    "quantity",
+    "quantité",
+    "dimension",
+    "price",
+    "prix",
+    "quote",
+    "devis",
+    "phone",
+    "whatsapp",
+  ];
+
+  if (includesAny(normalized, invalidLocationWords)) return false;
+
+  const knownLocationWords = [
+    "tunis",
+    "sousse",
+    "sfax",
+    "monastir",
+    "mahdia",
+    "nabeul",
+    "bizerte",
+    "gabes",
+    "gabès",
+    "kairouan",
+    "medenine",
+    "médenine",
+    "tunisia",
+    "tunisie",
+    "algeria",
+    "algérie",
+    "libya",
+    "libye",
+    "france",
+    "adresse",
+    "address",
+    "street",
+    "rue",
+    "zone",
+    "industrial",
+    "industrielle",
+  ];
+
+  if (includesAny(normalized, knownLocationWords)) return true;
+  if (wordCount(normalized) >= 2) return true;
+
+  return false;
+}
+
+function validateDetailsAnswer(text: string) {
+  const normalized = normalizeText(text);
+
+  if (!normalized) return false;
+
+  const noDetailsWords = ["no", "none", "nothing", "non", "aucun", "rien"];
+  if (noDetailsWords.includes(normalized)) return true;
+
+  if (normalized.length >= 3) return true;
+
+  return false;
+}
+
+function getValidationMessage(step: QuoteStep, lang: Lang) {
+  switch (step) {
+    case "department":
+      return lang === "fr"
+        ? "Veuillez choisir le service concerné: métal / acier ou aluminium."
+        : "Please choose the correct department: metal / steel or aluminum.";
+
+    case "product":
+      return lang === "fr"
+        ? "Cette réponse ne semble pas être un produit. Écrivez par exemple: tôle acier, tube, profil aluminium, porte, fenêtre ou garde-corps."
+        : "That does not look like a product. Please write something like: steel sheet, tube, aluminum profile, door, window, or guardrail.";
+
+    case "quantity":
+      return lang === "fr"
+        ? "Cette réponse ne semble pas être une quantité. Écrivez par exemple: 50 pièces, 200 mètres, 2 tonnes ou 100 kg."
+        : "That does not look like a quantity. Please write something like: 50 pieces, 200 meters, 2 tons, or 100 kg.";
+
+    case "dimensions":
+      return lang === "fr"
+        ? "Cette réponse ne semble pas être une dimension ou référence. Écrivez par exemple: 2mm, 40x40, 3m, référence ABC. Si vous ne savez pas, écrivez: pas sûr."
+        : "That does not look like dimensions or a reference. Please write something like: 2mm, 40x40, 3m, reference ABC. If you do not know, write: not sure.";
+
+    case "location":
+      return lang === "fr"
+        ? "Cette réponse ne semble pas être un lieu de livraison. Écrivez par exemple: Sousse, Tunis, Sfax, Monastir ou votre adresse."
+        : "That does not look like a delivery location. Please write something like: Sousse, Tunis, Sfax, Monastir, or your address.";
+
+    case "details":
+      return lang === "fr"
+        ? "Veuillez ajouter un détail ou écrire simplement: non."
+        : "Please add a detail or simply write: no.";
+
+    default:
+      return lang === "fr"
+        ? "Je n’ai pas bien compris. Pouvez-vous répondre à la question actuelle ?"
+        : "I did not fully understand. Please answer the current question.";
+  }
+}
+
+function getNextQuestion(step: QuoteStep, quote: QuoteData, lang: Lang) {
+  const department = quote.department
+    ? getDepartmentLabel(quote.department, lang)
+    : "";
+
+  switch (step) {
+    case "department":
+      return lang === "fr"
+        ? "Votre demande concerne quel service: métal / acier ou aluminium ?"
+        : "Which department is your request for: metal / steel or aluminum?";
+
+    case "product":
+      return lang === "fr"
+        ? `Parfait, service: ${department}. Quel produit souhaitez-vous ?`
+        : `Perfect, department: ${department}. What product do you need?`;
+
+    case "quantity":
+      return lang === "fr"
+        ? "Quelle quantité souhaitez-vous ?"
+        : "What quantity do you need?";
+
+    case "dimensions":
+      return lang === "fr"
+        ? "Quelles sont les dimensions, épaisseur ou références ? Si vous ne savez pas, écrivez: pas sûr."
+        : "What are the dimensions, thickness, or references? If you are not sure, write: not sure.";
+
+    case "location":
+      return lang === "fr"
+        ? "Quel est le lieu de livraison ?"
+        : "What is the delivery location?";
+
+    case "details":
+      return lang === "fr"
+        ? "Avez-vous des détails supplémentaires ? Si non, écrivez: non."
+        : "Do you have any extra details? If not, write: no.";
+
+    case "ready":
+      return lang === "fr"
+        ? "Votre demande est prête. Voulez-vous l’envoyer sur WhatsApp ?"
+        : "Your request is ready. Do you want to send it on WhatsApp?";
+
+    default:
+      return "";
+  }
+}
+
+function buildQuoteMessage(quote: QuoteData, lang: Lang) {
+  const department = quote.department
+    ? getDepartmentLabel(quote.department, lang)
+    : lang === "fr"
+      ? "Non précisé"
+      : "Not specified";
+
+  if (lang === "fr") {
+    return [
+      "Bonjour HSM Trading,",
+      "Je souhaite demander un devis.",
+      "",
+      `Service: ${department}`,
+      `Produit: ${quote.product || "Non précisé"}`,
+      `Quantité: ${quote.quantity || "Non précisée"}`,
+      `Dimensions / Références: ${quote.dimensions || "Non précisées"}`,
+      `Lieu de livraison: ${quote.location || "Non précisé"}`,
+      `Détails supplémentaires: ${quote.details || "Aucun"}`,
+    ].join("\n");
   }
 
-  if (
-    text.includes("produit") ||
-    text.includes("products") ||
-    text.includes("offer") ||
-    text.includes("propose")
-  ) {
+  return [
+    "Hello HSM Trading,",
+    "I would like to request a quote.",
+    "",
+    `Department: ${department}`,
+    `Product: ${quote.product || "Not specified"}`,
+    `Quantity: ${quote.quantity || "Not specified"}`,
+    `Dimensions / References: ${quote.dimensions || "Not specified"}`,
+    `Delivery location: ${quote.location || "Not specified"}`,
+    `Extra details: ${quote.details || "None"}`,
+  ].join("\n");
+}
+
+function getGeneralAnswer(message: string, lang: Lang) {
+  const department = detectDepartment(message);
+
+  if (isContactRequest(message)) {
+    const contacts = getContactDetails();
+
     return lang === "fr"
-      ? "HSM Trading propose des bobines d’acier, tôles d’acier, tubes ronds et carrés, poutrelles, panneaux sandwich, lames de rideaux métalliques et guides."
-      : "HSM Trading offers steel coils, steel sheets, round and square tubes, steel beams, sandwich panels, metal shutter slats and guides.";
+      ? `Voici les bons contacts WhatsApp: ${contacts}. Le premier numéro est pour métal / acier. Le deuxième est pour aluminium.`
+      : `Here are the correct WhatsApp contacts: ${contacts}. The first number is for metal / steel. The second number is for aluminum.`;
   }
 
-  if (
-    text.includes("contact") ||
-    text.includes("phone") ||
-    text.includes("email") ||
-    text.includes("whatsapp")
-  ) {
+  if (isProductQuestion(message)) {
     return lang === "fr"
-      ? `Vous pouvez contacter HSM Trading par téléphone ou WhatsApp au ${company.phone}, ou par email à ${company.email}.`
-      : `You can contact HSM Trading by phone or WhatsApp at ${company.phone}, or by email at ${company.email}.`;
+      ? "HSM Trading propose des produits métal / acier et aluminium. Je peux aussi vous aider à préparer une demande de devis étape par étape."
+      : "HSM Trading offers metal / steel and aluminum products. I can also help you prepare a quote request step by step.";
+  }
+
+  if (department === "aluminium") {
+    return lang === "fr"
+      ? "Votre demande semble concerner l’aluminium. Je peux préparer un devis pour le deuxième numéro WhatsApp. Quel produit aluminium souhaitez-vous ?"
+      : "Your request seems related to aluminum. I can prepare a quote request for the second WhatsApp number. What aluminum product do you need?";
+  }
+
+  if (department === "steel") {
+    return lang === "fr"
+      ? "Votre demande semble concerner métal / acier. Je peux préparer un devis pour le premier numéro WhatsApp. Quel produit souhaitez-vous ?"
+      : "Your request seems related to metal / steel. I can prepare a quote request for the first WhatsApp number. What product do you need?";
   }
 
   return lang === "fr"
-    ? "Merci pour votre message. Pour vous répondre précisément, indiquez le produit recherché, la quantité, les dimensions, l’épaisseur et le lieu de livraison. Vous pouvez aussi basculer vers WhatsApp."
-    : "Thank you for your message. To answer accurately, please share the product needed, quantity, dimensions, thickness and delivery location. You can also switch to WhatsApp.";
+    ? "Je peux vous aider à préparer un devis. Dites-moi si votre demande concerne métal / acier ou aluminium."
+    : "I can help you prepare a quote request. Tell me if your request is for metal / steel or aluminum.";
 }
 
 export default function ChatBubble({ lang }: ChatBubbleProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ChatMode>("assistant");
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [quoteMode, setQuoteMode] = useState(false);
+  const [quoteStep, setQuoteStep] = useState<QuoteStep>("department");
+  const [quote, setQuote] = useState<QuoteData>(emptyQuote);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const t = content[lang];
 
   const initialMessages = useMemo<ChatMessage[]>(
     () => [
       {
         role: "bot",
-        text:
-          lang === "fr"
-            ? "Bonjour, je suis l’assistant HSM. Je peux vous aider à choisir un produit, préparer un devis ou vous rediriger vers WhatsApp."
-            : "Hello, I am the HSM assistant. I can help you choose a product, prepare a quote request or redirect you to WhatsApp.",
+        text: getInitialMessage(lang),
       },
     ],
     [lang]
   );
 
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
-  const t = content[lang];
+  useEffect(() => {
+    setMessages(initialMessages);
+    setQuoteMode(false);
+    setQuoteStep("department");
+    setQuote(emptyQuote);
+    setMessage("");
+  }, [initialMessages]);
 
-  function openWhatsapp(text: string) {
-    window.open(
-      `https://wa.me/${company.whatsapp}?text=${encodeURIComponent(text)}`,
-      "_blank"
-    );
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, open, mode]);
+
+  function addMessages(newMessages: ChatMessage[]) {
+    setMessages((current) => [...current, ...newMessages]);
+  }
+
+  function startQuoteFlow(initialText?: string) {
+    const detectedDepartment = initialText ? detectDepartment(initialText) : null;
+
+    const nextQuote: QuoteData = {
+      ...emptyQuote,
+      department: detectedDepartment,
+    };
+
+    const nextStep: QuoteStep = detectedDepartment ? "product" : "department";
+
+    setQuoteMode(true);
+    setQuote(nextQuote);
+    setQuoteStep(nextStep);
+
+    addMessages([
+      {
+        role: "bot",
+        text: getNextQuestion(nextStep, nextQuote, lang),
+      },
+    ]);
+  }
+
+  function updateQuoteFlow(userText: string) {
+    let nextQuote = { ...quote };
+    let nextStep: QuoteStep = quoteStep;
+
+    if (quoteStep === "department") {
+      if (!validateDepartmentAnswer(userText)) {
+        addMessages([
+          {
+            role: "bot",
+            text: getValidationMessage("department", lang),
+          },
+        ]);
+        return;
+      }
+
+      nextQuote.department = detectDepartment(userText);
+      nextStep = "product";
+    } else if (quoteStep === "product") {
+      if (!validateProductAnswer(userText, quote.department)) {
+        addMessages([
+          {
+            role: "bot",
+            text: getValidationMessage("product", lang),
+          },
+        ]);
+        return;
+      }
+
+      nextQuote.product = userText;
+      nextStep = "quantity";
+    } else if (quoteStep === "quantity") {
+      if (!validateQuantityAnswer(userText)) {
+        addMessages([
+          {
+            role: "bot",
+            text: getValidationMessage("quantity", lang),
+          },
+        ]);
+        return;
+      }
+
+      nextQuote.quantity = userText;
+      nextStep = "dimensions";
+    } else if (quoteStep === "dimensions") {
+      if (!validateDimensionsAnswer(userText)) {
+        addMessages([
+          {
+            role: "bot",
+            text: getValidationMessage("dimensions", lang),
+          },
+        ]);
+        return;
+      }
+
+      nextQuote.dimensions = userText;
+      nextStep = "location";
+    } else if (quoteStep === "location") {
+      if (!validateLocationAnswer(userText)) {
+        addMessages([
+          {
+            role: "bot",
+            text: getValidationMessage("location", lang),
+          },
+        ]);
+        return;
+      }
+
+      nextQuote.location = userText;
+      nextStep = "details";
+    } else if (quoteStep === "details") {
+      if (!validateDetailsAnswer(userText)) {
+        addMessages([
+          {
+            role: "bot",
+            text: getValidationMessage("details", lang),
+          },
+        ]);
+        return;
+      }
+
+      nextQuote.details = userText;
+      nextStep = "ready";
+    } else if (quoteStep === "ready") {
+      const text = normalizeText(userText);
+
+      if (
+        text.includes("yes") ||
+        text.includes("send") ||
+        text.includes("ok") ||
+        text.includes("oui") ||
+        text.includes("envoyer")
+      ) {
+        openQuoteWhatsapp(nextQuote);
+        return;
+      }
+
+      addMessages([
+        {
+          role: "bot",
+          text:
+            lang === "fr"
+              ? "D’accord. Vous pouvez cliquer sur le bouton WhatsApp ci-dessous pour envoyer la demande."
+              : "Alright. You can click the WhatsApp button below to send the request.",
+          action: "send_quote",
+        },
+      ]);
+      return;
+    }
+
+    setQuote(nextQuote);
+    setQuoteStep(nextStep);
+
+    if (nextStep === "ready") {
+      const finalText = buildQuoteMessage(nextQuote, lang);
+
+      addMessages([
+        {
+          role: "bot",
+          text:
+            lang === "fr"
+              ? `Votre demande est prête:\n\n${finalText}`
+              : `Your request is ready:\n\n${finalText}`,
+          action: "send_quote",
+        },
+      ]);
+
+      return;
+    }
+
+    addMessages([
+      {
+        role: "bot",
+        text: getNextQuestion(nextStep, nextQuote, lang),
+      },
+    ]);
   }
 
   function sendAssistantMessage(customText?: string) {
@@ -139,13 +871,39 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
 
     if (!finalMessage) return;
 
-    setMessages((current) => [
-      ...current,
-      { role: "user", text: finalMessage },
-      { role: "bot", text: getBotAnswer(finalMessage, lang) },
+    setMessage("");
+
+    addMessages([
+      {
+        role: "user",
+        text: finalMessage,
+      },
     ]);
 
-    setMessage("");
+    if (quoteMode) {
+      updateQuoteFlow(finalMessage);
+      return;
+    }
+
+    if (isQuoteRequest(finalMessage) || detectDepartment(finalMessage)) {
+      startQuoteFlow(finalMessage);
+      return;
+    }
+
+    addMessages([
+      {
+        role: "bot",
+        text: getGeneralAnswer(finalMessage, lang),
+      },
+    ]);
+  }
+
+  function openQuoteWhatsapp(quoteToSend = quote) {
+    const messageToSend = buildQuoteMessage(quoteToSend, lang);
+    const department =
+      quoteToSend.department || getInquiryFromText(messageToSend);
+
+    window.open(createWhatsAppLink(department, messageToSend), "_blank");
   }
 
   function sendWhatsappMessage() {
@@ -154,12 +912,22 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
         ? "Bonjour HSM Trading, je souhaite avoir plus d’informations sur vos produits."
         : "Hello HSM Trading, I would like more information about your products.";
 
-    openWhatsapp(message.trim() || fallback);
+    const finalMessage = message.trim() || fallback;
+
+    window.open(
+      createWhatsAppLink(getInquiryFromText(finalMessage), finalMessage),
+      "_blank"
+    );
+
     setMessage("");
   }
 
   function resetConversation() {
     setMessages(initialMessages);
+    setQuoteMode(false);
+    setQuoteStep("department");
+    setQuote(emptyQuote);
+    setMessage("");
   }
 
   return (
@@ -167,55 +935,48 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{
-              opacity: 0,
-              y: 28,
-              scale: 0.96,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              scale: 1,
-            }}
-            exit={{
-              opacity: 0,
-              y: 24,
-              scale: 0.96,
-            }}
-            transition={{
-              duration: 0.28,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="fixed bottom-[5.5rem] left-3 right-3 z-50 flex max-h-[calc(100dvh-6.5rem)] flex-col overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/25 sm:bottom-24 sm:left-auto sm:right-5 sm:w-[calc(100%-2.5rem)] sm:max-w-md sm:rounded-[2rem]"
+            initial={{ opacity: 0, y: 28, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.96 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="fixed bottom-[5.5rem] left-3 right-3 z-50 flex h-[min(680px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-2xl shadow-slate-900/25 sm:bottom-24 sm:left-auto sm:right-5 sm:w-[430px]"
           >
-            <div className="relative overflow-hidden bg-[#0f3347] p-4 text-white sm:p-5">
-              <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[#e68613]/30 blur-2xl" />
-              <div className="absolute -bottom-12 left-12 h-32 w-32 rounded-full bg-green-400/20 blur-2xl" />
-
-              <div className="relative flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 backdrop-blur">
+            <div className="shrink-0 bg-[#0f3347] px-4 py-3 text-white">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
                     {mode === "assistant" ? (
-                      <Bot size={22} className="text-orange-200" />
+                      <Bot size={21} className="text-orange-200" />
                     ) : (
-                      <MessageCircle size={22} className="text-green-300" />
+                      <MessageCircle size={21} className="text-green-300" />
                     )}
                   </div>
 
-                  <div>
-                    <p className="flex items-center gap-2 font-black">
-                      {mode === "assistant" ? t.chat.title : "WhatsApp"}
-                      <Sparkles size={15} className="text-orange-200" />
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-2 truncate text-base font-black leading-tight">
+                      {mode === "assistant"
+                        ? lang === "fr"
+                          ? "Assistant HSM"
+                          : "HSM Assistant"
+                        : "WhatsApp"}
+                      <Sparkles size={14} className="shrink-0 text-orange-200" />
                     </p>
-                    <p className="text-sm text-slate-300">
-                      {mode === "assistant" ? t.chat.subtitle : company.phone}
+
+                    <p className="mt-1 truncate text-xs font-medium leading-tight text-slate-300">
+                      {mode === "assistant"
+                        ? lang === "fr"
+                          ? "Devis métal, acier & aluminium"
+                          : "Metal, steel & aluminum quotes"
+                        : lang === "fr"
+                          ? "Choisissez le bon numéro"
+                          : "Choose the right number"}
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setOpen(false)}
-                  className="rounded-full bg-white/10 p-2 transition hover:bg-white/20"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/20"
                   aria-label="Close chat"
                   type="button"
                 >
@@ -224,12 +985,12 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 border-b border-slate-200 bg-slate-50 p-3">
+            <div className="shrink-0 grid grid-cols-2 gap-2 border-b border-slate-200 bg-slate-50 p-2.5">
               <button
                 onClick={() => setMode("assistant")}
-                className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
+                className={`rounded-2xl px-4 py-2.5 text-sm font-black transition ${
                   mode === "assistant"
-                    ? "bg-[#0f3347] text-white shadow-lg shadow-slate-900/10"
+                    ? "bg-[#0f3347] text-white shadow-md shadow-slate-900/10"
                     : "bg-white text-slate-700 hover:bg-slate-100"
                 }`}
                 type="button"
@@ -239,9 +1000,9 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
 
               <button
                 onClick={() => setMode("whatsapp")}
-                className={`rounded-2xl px-4 py-3 text-sm font-black transition ${
+                className={`rounded-2xl px-4 py-2.5 text-sm font-black transition ${
                   mode === "whatsapp"
-                    ? "bg-green-500 text-white shadow-lg shadow-green-900/15"
+                    ? "bg-green-500 text-white shadow-md shadow-green-900/15"
                     : "bg-white text-slate-700 hover:bg-slate-100"
                 }`}
                 type="button"
@@ -252,56 +1013,86 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
 
             {mode === "assistant" ? (
               <>
-                <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">
-                  {messages.map((item, index) => (
-                    <motion.div
-                      key={`${item.role}-${index}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.22 }}
-                      className={`flex gap-3 ${
-                        item.role === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      {item.role === "bot" && (
-                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#e68613]">
-                          <Bot size={17} />
-                        </div>
-                      )}
-
-                      <div
-                        className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                <div className="min-h-0 flex-1 overflow-y-auto bg-white p-4">
+                  <div className="space-y-4">
+                    {messages.map((item, index) => (
+                      <motion.div
+                        key={`${item.role}-${index}`}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.22 }}
+                        className={`flex gap-3 ${
                           item.role === "user"
-                            ? "bg-[#0f3347] text-white"
-                            : "bg-slate-100 text-slate-700"
+                            ? "justify-end"
+                            : "justify-start"
                         }`}
                       >
-                        {item.text}
-                      </div>
+                        {item.role === "bot" && (
+                          <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-[#e68613]">
+                            <Bot size={17} />
+                          </div>
+                        )}
 
-                      {item.role === "user" && (
-                        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700">
-                          <User size={17} />
+                        <div
+                          className={`max-w-[82%] whitespace-pre-line rounded-2xl px-4 py-3 text-sm leading-6 ${
+                            item.role === "user"
+                              ? "bg-[#0f3347] text-white"
+                              : "bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          {item.text}
+
+                          {item.action === "send_quote" && (
+                            <button
+                              onClick={() => openQuoteWhatsapp()}
+                              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-3 font-black text-white transition hover:bg-green-600"
+                              type="button"
+                            >
+                              <MessageCircle size={18} />
+                              {lang === "fr"
+                                ? "Envoyer sur WhatsApp"
+                                : "Send on WhatsApp"}
+                            </button>
+                          )}
                         </div>
-                      )}
-                    </motion.div>
-                  ))}
 
-                  <div className="grid gap-2 pt-2">
-                    {starterQuestions[lang].map((question) => (
-                      <button
-                        key={question}
-                        onClick={() => sendAssistantMessage(question)}
-                        className="rounded-2xl border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:border-orange-200 hover:bg-orange-50"
-                        type="button"
-                      >
-                        {question}
-                      </button>
+                        {item.role === "user" && (
+                          <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700">
+                            <User size={17} />
+                          </div>
+                        )}
+                      </motion.div>
                     ))}
+
+                    {!quoteMode && (
+                      <div className="grid gap-2 pt-1">
+                        {starterQuestions[lang].map((question) => (
+                          <button
+                            key={question}
+                            onClick={() => sendAssistantMessage(question)}
+                            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:border-orange-200 hover:bg-orange-50"
+                            type="button"
+                          >
+                            {question}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {quoteMode && quote.department && quoteStep !== "ready" && (
+                      <div className="rounded-2xl border border-orange-100 bg-orange-50 p-3 text-xs font-bold text-orange-900">
+                        {lang === "fr"
+                          ? "Service sélectionné:"
+                          : "Selected department:"}{" "}
+                        {getDepartmentLabel(quote.department, lang)}
+                      </div>
+                    )}
+
+                    <div ref={messagesEndRef} />
                   </div>
                 </div>
 
-                <div className="border-t border-slate-200 p-4">
+                <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-3">
                   <div className="flex gap-2">
                     <input
                       value={message}
@@ -309,13 +1100,19 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
                       onKeyDown={(event) => {
                         if (event.key === "Enter") sendAssistantMessage();
                       }}
-                      placeholder={t.chat.placeholder}
+                      placeholder={
+                        quoteMode
+                          ? lang === "fr"
+                            ? "Répondez ici..."
+                            : "Reply here..."
+                          : t.chat.placeholder
+                      }
                       className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#e68613] focus:ring-4 focus:ring-orange-100"
                     />
 
                     <button
                       onClick={() => sendAssistantMessage()}
-                      className="rounded-2xl bg-[#e68613] px-4 text-white transition hover:bg-[#cc720d]"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#e68613] text-white transition hover:bg-[#cc720d]"
                       aria-label="Send message"
                       type="button"
                     >
@@ -323,37 +1120,76 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
                     </button>
                   </div>
 
-                  <button
-                    onClick={resetConversation}
-                    className="mt-3 text-xs font-bold text-slate-500 transition hover:text-[#e68613]"
-                    type="button"
-                  >
-                    {lang === "fr"
-                      ? "Réinitialiser la conversation"
-                      : "Reset conversation"}
-                  </button>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <button
+                      onClick={resetConversation}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-[#e68613]"
+                      type="button"
+                    >
+                      <RotateCcw size={13} />
+                      {lang === "fr" ? "Réinitialiser" : "Reset"}
+                    </button>
+
+                    {!quoteMode && (
+                      <button
+                        onClick={() => startQuoteFlow()}
+                        className="text-xs font-black text-[#e68613] transition hover:text-[#cc720d]"
+                        type="button"
+                      >
+                        {lang === "fr" ? "Créer un devis" : "Create a quote"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
-              <div className="overflow-y-auto p-4 sm:p-5">
-                <div className="rounded-3xl bg-green-50 p-5 text-green-900">
-                  <CheckCircle2 />
-                  <h3 className="mt-4 text-xl font-black">
+              <div className="min-h-0 flex-1 overflow-y-auto bg-white p-4">
+                <div className="rounded-3xl bg-green-50 p-4 text-green-900">
+                  <CheckCircle2 size={24} />
+                  <h3 className="mt-3 text-lg font-black">
                     {lang === "fr"
                       ? "Contact direct WhatsApp"
                       : "Direct WhatsApp contact"}
                   </h3>
-                  <p className="mt-3 text-sm leading-6">
+                  <p className="mt-2 text-sm leading-6">
                     {lang === "fr"
-                      ? "Écrivez votre message, puis ouvrez WhatsApp pour discuter directement avec HSM Trading."
-                      : "Write your message, then open WhatsApp to speak directly with HSM Trading."}
+                      ? "Le message sera envoyé au bon service selon votre demande."
+                      : "Your message will be sent to the right department based on your request."}
                   </p>
+                </div>
+
+                <div className="mt-4 grid gap-3">
+                  {company.whatsappContacts.map((contact) => (
+                    <a
+                      key={contact.key}
+                      href={createWhatsAppLink(
+                        contact.key,
+                        getDefaultWhatsAppMessage(contact.key, lang)
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-green-300 hover:bg-green-50"
+                    >
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">
+                          {contact.key === "steel"
+                            ? "Metal / Steel"
+                            : "Aluminum"}
+                        </p>
+                        <p className="mt-1 font-black text-slate-900">
+                          {contact.label}
+                        </p>
+                      </div>
+
+                      <Phone size={19} className="text-green-600" />
+                    </a>
+                  ))}
                 </div>
 
                 <textarea
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
-                  rows={5}
+                  rows={4}
                   placeholder={
                     lang === "fr"
                       ? "Bonjour HSM Trading, je souhaite..."
@@ -364,7 +1200,7 @@ export default function ChatBubble({ lang }: ChatBubbleProps) {
 
                 <button
                   onClick={sendWhatsappMessage}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-green-500 px-5 py-4 font-black text-white transition hover:bg-green-600"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-green-500 px-5 py-4 font-black text-white transition hover:bg-green-600"
                   type="button"
                 >
                   <MessageCircle size={20} />
